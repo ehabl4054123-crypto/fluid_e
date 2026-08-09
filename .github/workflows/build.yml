@@ -1,12 +1,33 @@
-      # 3. تحميل المكتبات المطلوبة
+name: Build fluid_e APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
       - name: Install Dependencies
         run: flutter pub get
 
-      # الخطوة الجديدة: توجيه السيرفر لإنشاء ملفات الأندرويد الناقصة
       - name: Generate Android Files
         run: flutter create .
 
-      # 4. تجميع التطبيق وإنتاج ملف APK الأصلي
       - name: Build APK
         run: flutter build apk --release
 
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fluid_e-app
+          path: build/app/outputs/flutter-apk/app-release.apk
