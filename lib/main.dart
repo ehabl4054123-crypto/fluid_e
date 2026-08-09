@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'screens/chat_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   runApp(const FluidWaterApp());
@@ -12,7 +15,6 @@ class FluidWaterApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pure Liquid UI',
       debugShowCheckedModeBanner: false,
-      // خلفية داكنة بلون أعماق البحر لإبراز لون المياه الصافي
       theme: ThemeData(scaffoldBackgroundColor: const Color(0xFF0A192F)),
       home: const PureLiquidNavBar(),
     );
@@ -34,18 +36,21 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
     Icons.person_rounded,
   ];
 
+  // قائمة الشاشات التي سيتم التنقل بينها
+  final List<Widget> _screens = [
+    const ChatScreen(),
+    const SettingsScreen(),
+    const ProfileScreen(),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final double itemWidth = screenWidth / icons.length;
 
     return Scaffold(
-      body: Center(
-        child: Text(
-          _getScreenName(selectedIndex),
-          style: const TextStyle(color: Color(0xFF00A8E8), fontSize: 30, fontWeight: FontWeight.bold),
-        ),
-      ),
+      // عرض الشاشة بناءً على الأيقونة المحددة
+      body: _screens[selectedIndex],
       extendBody: true,
       bottomNavigationBar: SizedBox(
         height: 100,
@@ -57,7 +62,6 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
               curve: Curves.easeInOutCubic,
               builder: (context, value, child) {
                 final currentPosition = (value + 0.5) * itemWidth;
-
                 return Stack(
                   children: [
                     CustomPaint(
@@ -73,7 +77,6 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
                 );
               },
             ),
-
             Row(
               children: List.generate(icons.length, (index) {
                 final isSelected = index == selectedIndex;
@@ -87,18 +90,13 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
                       child: AnimatedOpacity(
                         duration: const Duration(milliseconds: 300),
                         opacity: isSelected ? 0.0 : 1.0,
-                        child: Icon(
-                          icons[index],
-                          color: Colors.white.withOpacity(0.6), // أيقونات شفافة قليلاً
-                          size: 26,
-                        ),
+                        child: Icon(icons[index], color: Colors.white.withOpacity(0.6), size: 26),
                       ),
                     ),
                   ),
                 );
               }),
             ),
-            
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: selectedIndex.toDouble()),
               duration: const Duration(milliseconds: 400),
@@ -108,11 +106,7 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
                 return Positioned(
                   left: currentPosition - 13,
                   top: 31,
-                  child: Icon(
-                    icons[selectedIndex],
-                    color: Colors.white, // الأيقونة داخل قطرة الماء بيضاء ناصعة
-                    size: 26,
-                  ),
+                  child: Icon(icons[selectedIndex], color: Colors.white, size: 26),
                 );
               },
             ),
@@ -121,94 +115,45 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
       ),
     );
   }
-
-  String _getScreenName(int index) {
-    if (index == 0) return 'المراسلة';
-    if (index == 1) return 'الإعدادات';
-    return 'الملف الشخصي';
-  }
 }
 
-// ==========================================
 class WaterDropItem extends StatelessWidget {
   const WaterDropItem({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 60,
-      height: 60,
+      width: 60, height: 60,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        // ألوان المياه الواقعية (من الأبيض الفاتح للأزرق الغامق)
         gradient: const RadialGradient(
-          center: Alignment(-0.3, -0.5),
-          radius: 0.9,
-          colors: [
-            Color(0xFF89EEFF), // لمعة انعكاس الضوء على سطح القطرة
-            Color(0xFF00A8E8), // لون المياه الأساسي
-            Color(0xFF005C8A), // الظل المائي العميق
-          ],
+          center: Alignment(-0.3, -0.5), radius: 0.9,
+          colors: [Color(0xFF89EEFF), Color(0xFF00A8E8), Color(0xFF005C8A)],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF002233).withOpacity(0.6), // ظل أزرق داكن للقطرة
-            blurRadius: 12,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: const Color(0xFF002233).withOpacity(0.6), blurRadius: 12, offset: const Offset(0, 8))],
       ),
     );
   }
 }
 
-// ==========================================
 class LiquidSocketPainter extends CustomPainter {
   final double position;
   LiquidSocketPainter(this.position);
-
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF00A8E8) // لون المياه الصافي
-      ..style = PaintingStyle.fill;
-
+    final paint = Paint()..color = const Color(0xFF00A8E8)..style = PaintingStyle.fill;
     final path = Path();
     const double curveWidth = 110;
     const double curveDepth = 45;
-
     final double startX = position - (curveWidth / 2);
     final double endX = position + (curveWidth / 2);
-
-    path.moveTo(0, 0);
-    path.lineTo(startX, 0);
-
-    path.cubicTo(
-      position - 30, 0,
-      position - 35, curveDepth,
-      position, curveDepth,
-    );
-    path.cubicTo(
-      position + 35, curveDepth,
-      position + 30, 0,
-      endX, 0,
-    );
-
-    path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    
+    path.moveTo(0, 0); path.lineTo(startX, 0);
+    path.cubicTo(position - 30, 0, position - 35, curveDepth, position, curveDepth);
+    path.cubicTo(position + 35, curveDepth, position + 30, 0, endX, 0);
+    path.lineTo(size.width, 0); path.lineTo(size.width, size.height); path.lineTo(0, size.height); path.close();
     canvas.drawPath(path, paint);
-
-    // إضافة لمعة خفيفة جداً على حافة المياه من الأعلى
-    final highlightPaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+    final highlightPaint = Paint()..color = Colors.white.withOpacity(0.2)..style = PaintingStyle.stroke..strokeWidth = 1.0;
     canvas.drawPath(path, highlightPaint);
   }
-
   @override
   bool shouldRepaint(covariant LiquidSocketPainter oldDelegate) => true;
 }
