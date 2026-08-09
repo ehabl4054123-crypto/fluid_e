@@ -12,8 +12,8 @@ class FluidWaterApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pure Liquid UI',
       debugShowCheckedModeBanner: false,
-      // لون خلفية التطبيق (داكن لتعزيز بروز الماء)
-      theme: ThemeData(scaffoldBackgroundColor: const Color(0xFF121418)),
+      // خلفية داكنة بلون أعماق البحر لإبراز لون المياه الصافي
+      theme: ThemeData(scaffoldBackgroundColor: const Color(0xFF0A192F)),
       home: const PureLiquidNavBar(),
     );
   }
@@ -27,12 +27,11 @@ class PureLiquidNavBar extends StatefulWidget {
 }
 
 class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
-  // الخانات الثلاثة التي طلبتها
   int selectedIndex = 0;
   final List<IconData> icons = [
-    Icons.chat_bubble_rounded, // الرسائل
-    Icons.settings_rounded,    // الإعدادات
-    Icons.person_rounded,      // الملف الشخصي
+    Icons.chat_bubble_rounded,
+    Icons.settings_rounded,
+    Icons.person_rounded,
   ];
 
   @override
@@ -44,7 +43,7 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
       body: Center(
         child: Text(
           _getScreenName(selectedIndex),
-          style: const TextStyle(color: Colors.white38, fontSize: 30, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Color(0xFF00A8E8), fontSize: 30, fontWeight: FontWeight.bold),
         ),
       ),
       extendBody: true,
@@ -52,25 +51,22 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
         height: 100,
         child: Stack(
           children: [
-            // 1. الحركة السلسة جداً (Apple-like Smoothness)
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: selectedIndex.toDouble()),
               duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOutCubic, // انسيابية مائية بدون أي اهتزاز
+              curve: Curves.easeInOutCubic,
               builder: (context, value, child) {
                 final currentPosition = (value + 0.5) * itemWidth;
 
                 return Stack(
                   children: [
-                    // رسم السائل (الشريط)
                     CustomPaint(
                       size: Size(screenWidth, 100),
                       painter: LiquidSocketPainter(currentPosition),
                     ),
-                    // قطرة الماء المتحركة 3D
                     Positioned(
-                      left: currentPosition - 30, // 30 هو نصف عرض القطرة
-                      top: 15, // مستوى الغوص في السائل
+                      left: currentPosition - 30,
+                      top: 15,
                       child: const WaterDropItem(),
                     ),
                   ],
@@ -78,7 +74,6 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
               },
             ),
 
-            // 2. الأزرار الشفافة لالتقاط الضغطات وتغيير الأيقونات
             Row(
               children: List.generate(icons.length, (index) {
                 final isSelected = index == selectedIndex;
@@ -91,11 +86,10 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
                     child: Center(
                       child: AnimatedOpacity(
                         duration: const Duration(milliseconds: 300),
-                        // إخفاء الأيقونة من الشريط إذا كانت القطرة تقف عليها
                         opacity: isSelected ? 0.0 : 1.0,
                         child: Icon(
                           icons[index],
-                          color: Colors.white54,
+                          color: Colors.white.withOpacity(0.6), // أيقونات شفافة قليلاً
                           size: 26,
                         ),
                       ),
@@ -105,8 +99,6 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
               }),
             ),
             
-            // 3. الأيقونة التي تظهر داخل القطرة المائية
-            // مفصولة هنا لتتحرك مع القطرة بسلاسة
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: selectedIndex.toDouble()),
               duration: const Duration(milliseconds: 400),
@@ -114,11 +106,11 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
               builder: (context, value, child) {
                 final currentPosition = (value + 0.5) * itemWidth;
                 return Positioned(
-                  left: currentPosition - 13, // لضبط الأيقونة في منتصف القطرة
+                  left: currentPosition - 13,
                   top: 31,
                   child: Icon(
                     icons[selectedIndex],
-                    color: Colors.white,
+                    color: Colors.white, // الأيقونة داخل قطرة الماء بيضاء ناصعة
                     size: 26,
                   ),
                 );
@@ -138,8 +130,6 @@ class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
 }
 
 // ==========================================
-// كلاس خاص بـ "قطرة الماء" الثلاثية الأبعاد
-// ==========================================
 class WaterDropItem extends StatelessWidget {
   const WaterDropItem({super.key});
 
@@ -150,20 +140,19 @@ class WaterDropItem extends StatelessWidget {
       height: 60,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        // تدرج لوني يحاكي سقوط الضوء على قطرة مياه حقيقية
+        // ألوان المياه الواقعية (من الأبيض الفاتح للأزرق الغامق)
         gradient: const RadialGradient(
           center: Alignment(-0.3, -0.5),
           radius: 0.9,
           colors: [
-            Color(0xFF4A4E59), // لمعة الإضاءة من الأعلى
-            Color(0xFF23262D), // لون السائل الأساسي
-            Color(0xFF0D0F12), // الظل الداخلي العميق
+            Color(0xFF89EEFF), // لمعة انعكاس الضوء على سطح القطرة
+            Color(0xFF00A8E8), // لون المياه الأساسي
+            Color(0xFF005C8A), // الظل المائي العميق
           ],
         ),
         boxShadow: [
-          // ظل قطرة الماء على الشريط
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: const Color(0xFF002233).withOpacity(0.6), // ظل أزرق داكن للقطرة
             blurRadius: 12,
             offset: const Offset(0, 8),
           ),
@@ -174,8 +163,6 @@ class WaterDropItem extends StatelessWidget {
 }
 
 // ==========================================
-// كلاس خاص برسم السائل المتصل وانحناء المياه
-// ==========================================
 class LiquidSocketPainter extends CustomPainter {
   final double position;
   LiquidSocketPainter(this.position);
@@ -183,12 +170,12 @@ class LiquidSocketPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF23262D) // نفس لون السائل لدمج القطرة بالشريط
+      ..color = const Color(0xFF00A8E8) // لون المياه الصافي
       ..style = PaintingStyle.fill;
 
     final path = Path();
-    const double curveWidth = 110; // عرض الانحناء
-    const double curveDepth = 45;  // عمق الغطسة
+    const double curveWidth = 110;
+    const double curveDepth = 45;
 
     final double startX = position - (curveWidth / 2);
     final double endX = position + (curveWidth / 2);
@@ -196,7 +183,6 @@ class LiquidSocketPainter extends CustomPainter {
     path.moveTo(0, 0);
     path.lineTo(startX, 0);
 
-    // معادلات فيزيائية لرسم توتر السائل (Liquid Tension)
     path.cubicTo(
       position - 30, 0,
       position - 35, curveDepth,
@@ -213,12 +199,11 @@ class LiquidSocketPainter extends CustomPainter {
     path.lineTo(0, size.height);
     path.close();
     
-    // رسم السائل الأساسي
     canvas.drawPath(path, paint);
 
-    // إضافة لمعة خفيفة جداً على حافة السائل من الأعلى للـ 3D
+    // إضافة لمعة خفيفة جداً على حافة المياه من الأعلى
     final highlightPaint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = Colors.white.withOpacity(0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
     canvas.drawPath(path, highlightPaint);
