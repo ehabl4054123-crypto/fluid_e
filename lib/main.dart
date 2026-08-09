@@ -1,145 +1,147 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const FluidEApp());
+  runApp(const FluidWaterApp());
 }
 
-class FluidEApp extends StatelessWidget {
-  const FluidEApp({super.key});
+class FluidWaterApp extends StatelessWidget {
+  const FluidWaterApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'fluid_e 3D',
+      title: 'Pure Liquid UI',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: const MainScreen(),
+      // لون خلفية التطبيق (داكن لتعزيز بروز الماء)
+      theme: ThemeData(scaffoldBackgroundColor: const Color(0xFF121418)),
+      home: const PureLiquidNavBar(),
     );
   }
 }
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+class PureLiquidNavBar extends StatefulWidget {
+  const PureLiquidNavBar({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<PureLiquidNavBar> createState() => _PureLiquidNavBarState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _PureLiquidNavBarState extends State<PureLiquidNavBar> {
+  // الخانات الثلاثة التي طلبتها
   int selectedIndex = 0;
   final List<IconData> icons = [
-    Icons.home_rounded,
-    Icons.chat_bubble_rounded,
-    Icons.settings_rounded,
-    Icons.person_rounded,
+    Icons.chat_bubble_rounded, // الرسائل
+    Icons.settings_rounded,    // الإعدادات
+    Icons.person_rounded,      // الملف الشخصي
   ];
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double itemWidth = screenWidth / icons.length;
+
     return Scaffold(
-      // خلفية التطبيق (تدرج لوني فخم لإبراز تأثير الزجاج)
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
-          ),
-        ),
-        child: const Center(
-          child: Text('3D Fluid Meniscus UI', 
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white70, letterSpacing: 1.5)),
+      body: Center(
+        child: Text(
+          _getScreenName(selectedIndex),
+          style: const TextStyle(color: Colors.white38, fontSize: 30, fontWeight: FontWeight.bold),
         ),
       ),
       extendBody: true,
-      bottomNavigationBar: _build3DFluidNavBar(),
-    );
-  }
+      bottomNavigationBar: SizedBox(
+        height: 100,
+        child: Stack(
+          children: [
+            // 1. الحركة السلسة جداً (Apple-like Smoothness)
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: selectedIndex.toDouble()),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutCubic, // انسيابية مائية بدون أي اهتزاز
+              builder: (context, value, child) {
+                final currentPosition = (value + 0.5) * itemWidth;
 
-  Widget _build3DFluidNavBar() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    // حساب المسافة لكل أيقونة
-    final double itemWidth = screenWidth / icons.length; 
-    
-    return SizedBox(
-      height: 100,
-      child: Stack(
-        children: [
-          // 1. الشريط الزجاجي مع الانحناء المائي (Fluid Socket)
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: selectedIndex.toDouble()),
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.elasticOut, // حركة فيزيائية مرنة
-            builder: (context, value, child) {
-              final currentPosition = (value + 0.5) * itemWidth;
-              
-              return Stack(
-                children: [
-                  // تأثير الزجاج الضبابي (Glassmorphism)
-                  ClipPath(
-                    clipper: FluidClipper(currentPosition),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        color: Colors.black.withOpacity(0.4), // لون زجاجي داكن
+                return Stack(
+                  children: [
+                    // رسم السائل (الشريط)
+                    CustomPaint(
+                      size: Size(screenWidth, 100),
+                      painter: LiquidSocketPainter(currentPosition),
+                    ),
+                    // قطرة الماء المتحركة 3D
+                    Positioned(
+                      left: currentPosition - 30, // 30 هو نصف عرض القطرة
+                      top: 15, // مستوى الغوص في السائل
+                      child: const WaterDropItem(),
+                    ),
+                  ],
+                );
+              },
+            ),
+
+            // 2. الأزرار الشفافة لالتقاط الضغطات وتغيير الأيقونات
+            Row(
+              children: List.generate(icons.length, (index) {
+                final isSelected = index == selectedIndex;
+                return GestureDetector(
+                  onTap: () => setState(() => selectedIndex = index),
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: itemWidth,
+                    height: 100,
+                    child: Center(
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 300),
+                        // إخفاء الأيقونة من الشريط إذا كانت القطرة تقف عليها
+                        opacity: isSelected ? 0.0 : 1.0,
+                        child: Icon(
+                          icons[index],
+                          color: Colors.white54,
+                          size: 26,
+                        ),
                       ),
                     ),
                   ),
-                  // حدود لامعة للشريط (Glossy Border)
-                  CustomPaint(
-                    size: Size(screenWidth, 100),
-                    painter: FluidPainter(currentPosition),
+                );
+              }),
+            ),
+            
+            // 3. الأيقونة التي تظهر داخل القطرة المائية
+            // مفصولة هنا لتتحرك مع القطرة بسلاسة
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: selectedIndex.toDouble()),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutCubic,
+              builder: (context, value, child) {
+                final currentPosition = (value + 0.5) * itemWidth;
+                return Positioned(
+                  left: currentPosition - 13, // لضبط الأيقونة في منتصف القطرة
+                  top: 31,
+                  child: Icon(
+                    icons[selectedIndex],
+                    color: Colors.white,
+                    size: 26,
                   ),
-                  // 2. الكرة ثلاثية الأبعاد (3D Orb)
-                  Positioned(
-                    left: currentPosition - 30, // 30 هو نصف عرض الكرة
-                    top: 15, // غوص الكرة داخل التجويف
-                    child: const Sphere3D(),
-                  ),
-                ],
-              );
-            },
-          ),
-          
-          // 3. الأيقونات التفاعلية
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(icons.length, (index) {
-              final isSelected = index == selectedIndex;
-              return GestureDetector(
-                onTap: () => setState(() => selectedIndex = index),
-                behavior: HitTestBehavior.opaque,
-                child: SizedBox(
-                  width: itemWidth,
-                  height: 100,
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: EdgeInsets.only(top: isSelected ? 30 : 0),
-                      child: Icon(
-                        icons[index],
-                        size: isSelected ? 28 : 24,
-                        color: isSelected ? Colors.cyanAccent : Colors.white54,
-                        shadows: isSelected 
-                          ? [const BoxShadow(color: Colors.cyanAccent, blurRadius: 10)] 
-                          : [],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  String _getScreenName(int index) {
+    if (index == 0) return 'المراسلة';
+    if (index == 1) return 'الإعدادات';
+    return 'الملف الشخصي';
+  }
 }
 
-// === مكون الكرة 3D (الجرافيك العالي) ===
-class Sphere3D extends StatelessWidget {
-  const Sphere3D({super.key});
+// ==========================================
+// كلاس خاص بـ "قطرة الماء" الثلاثية الأبعاد
+// ==========================================
+class WaterDropItem extends StatelessWidget {
+  const WaterDropItem({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -148,30 +150,22 @@ class Sphere3D extends StatelessWidget {
       height: 60,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        // التدرج الدائري لصنع إضاءة كروية 3D (نقطة ضوء من الأعلى)
-        gradient: RadialGradient(
-          center: const Alignment(-0.3, -0.5),
-          radius: 0.8,
+        // تدرج لوني يحاكي سقوط الضوء على قطرة مياه حقيقية
+        gradient: const RadialGradient(
+          center: Alignment(-0.3, -0.5),
+          radius: 0.9,
           colors: [
-            Colors.white, // نقطة اللمعان
-            Colors.cyan.shade400, // اللون الأساسي
-            const Color(0xFF003344), // الظل السفلي للكرة
+            Color(0xFF4A4E59), // لمعة الإضاءة من الأعلى
+            Color(0xFF23262D), // لون السائل الأساسي
+            Color(0xFF0D0F12), // الظل الداخلي العميق
           ],
-          stops: const [0.0, 0.4, 1.0],
         ),
         boxShadow: [
-          // التوهج الخارجي للكرة (Glow)
+          // ظل قطرة الماء على الشريط
           BoxShadow(
-            color: Colors.cyanAccent.withOpacity(0.5),
-            blurRadius: 20,
-            spreadRadius: 2,
-            offset: const Offset(0, 5),
-          ),
-          // الظل السفلي العميق
-          BoxShadow(
-            color: Colors.black.withOpacity(0.6),
-            blurRadius: 10,
-            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 12,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -179,64 +173,57 @@ class Sphere3D extends StatelessWidget {
   }
 }
 
-// === حسابات مسار الانحناء (الرياضيات) ===
-class FluidClipper extends CustomClipper<Path> {
+// ==========================================
+// كلاس خاص برسم السائل المتصل وانحناء المياه
+// ==========================================
+class LiquidSocketPainter extends CustomPainter {
   final double position;
-  FluidClipper(this.position);
-
-  @override
-  Path getClip(Size size) {
-    return _generateFluidPath(size, position);
-  }
-  @override
-  bool shouldReclip(covariant FluidClipper oldClipper) => true;
-}
-
-class FluidPainter extends CustomPainter {
-  final double position;
-  FluidPainter(this.position);
+  LiquidSocketPainter(this.position);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final path = _generateFluidPath(size, position);
-    // رسم خط علوي مضيء خفيف يعطي إحساس السطح الزجاجي (Highlight)
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..color = const Color(0xFF23262D) // نفس لون السائل لدمج القطرة بالشريط
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    const double curveWidth = 110; // عرض الانحناء
+    const double curveDepth = 45;  // عمق الغطسة
+
+    final double startX = position - (curveWidth / 2);
+    final double endX = position + (curveWidth / 2);
+
+    path.moveTo(0, 0);
+    path.lineTo(startX, 0);
+
+    // معادلات فيزيائية لرسم توتر السائل (Liquid Tension)
+    path.cubicTo(
+      position - 30, 0,
+      position - 35, curveDepth,
+      position, curveDepth,
+    );
+    path.cubicTo(
+      position + 35, curveDepth,
+      position + 30, 0,
+      endX, 0,
+    );
+
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    
+    // رسم السائل الأساسي
     canvas.drawPath(path, paint);
+
+    // إضافة لمعة خفيفة جداً على حافة السائل من الأعلى للـ 3D
+    final highlightPaint = Paint()
+      ..color = Colors.white.withOpacity(0.05)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawPath(path, highlightPaint);
   }
+
   @override
-  bool shouldRepaint(covariant FluidPainter oldDelegate) => true;
-}
-
-Path _generateFluidPath(Size size, double position) {
-  final path = Path();
-  const double curveWidth = 130;
-  const double curveDepth = 45;
-
-  final double startX = position - (curveWidth / 2);
-  final double endX = position + (curveWidth / 2);
-
-  path.moveTo(0, 0);
-  path.lineTo(startX - 20, 0);
-
-  // الانحناء السلس (Meniscus)
-  path.cubicTo(
-    startX, 0,
-    position - 35, curveDepth,
-    position, curveDepth,
-  );
-  path.cubicTo(
-    position + 35, curveDepth,
-    endX, 0,
-    endX + 20, 0,
-  );
-
-  path.lineTo(size.width, 0);
-  path.lineTo(size.width, size.height);
-  path.lineTo(0, size.height);
-  path.close();
-  
-  return path;
+  bool shouldRepaint(covariant LiquidSocketPainter oldDelegate) => true;
 }
