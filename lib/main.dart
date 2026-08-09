@@ -1,5 +1,5 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'water_drop_button.dart';
 
 void main() {
   runApp(const FluidEApp());
@@ -11,69 +11,125 @@ class FluidEApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'fluid_e',
+      title: 'fluid_e 3D',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(scaffoldBackgroundColor: const Color(0xFF1E1E1E)),
-      home: const Scaffold(
-        body: Center(
-          child: Text('fluid_e Animated UI', style: TextStyle(color: Colors.white, fontSize: 24)),
-        ),
-        // استدعاء شريط التنقل الجديد التفاعلي
-        bottomNavigationBar: FluidNavBar(),
-        // السماح للشاشة بالتمدد خلف الشريط الشفاف
-        extendBody: true, 
-      ),
+      theme: ThemeData.dark(),
+      home: const MainScreen(),
     );
   }
 }
 
-class FluidNavBar extends StatefulWidget {
-  const FluidNavBar({super.key});
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
 
   @override
-  State<FluidNavBar> createState() => _FluidNavBarState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _FluidNavBarState extends State<FluidNavBar> {
-  // متغير لحفظ مكان الزرار (من 0.0 إلى 1.0)
-  double buttonPosition = 0.5;
+class _MainScreenState extends State<MainScreen> {
+  int selectedIndex = 0;
+  final List<IconData> icons = [
+    Icons.home_rounded,
+    Icons.chat_bubble_rounded,
+    Icons.settings_rounded,
+    Icons.person_rounded,
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    const buttonWidth = 70.0;
-    
-    // حساب المكان الفعلي للزرار على الشاشة
-    double absoluteX = (screenWidth * buttonPosition) - (buttonWidth / 2);
-
-    return SizedBox(
-      height: 120, // ارتفاع كافي لحركة الانحناء
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // 1. الشريط السفلي المرسوم رياضياً
-          Positioned(
-            bottom: 0, left: 0, right: 0,
-            child: CustomPaint(
-              size: Size(screenWidth, 80), // ارتفاع الشريط
-              painter: FluidPainter(buttonPosition),
-            ),
+    return Scaffold(
+      // خلفية التطبيق (تدرج لوني فخم لإبراز تأثير الزجاج)
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
           ),
-          // 2. زر قطرة الماء القابل للسحب
-          Positioned(
-            bottom: 25, // رفع الزرار ليستقر داخل المنحنى
-            left: absoluteX,
-            child: GestureDetector(
-              // تحديث مكان الزرار عند سحبه يميناً ويساراً
-              onPanUpdate: (details) {
-                setState(() {
-                  buttonPosition += details.delta.dx / screenWidth;
-                  // منع الزرار من الخروج برا الشاشة
-                  buttonPosition = buttonPosition.clamp(0.1, 0.9);
-                });
-              },
-              child: const WaterDropButton(),
-            ),
+        ),
+        child: const Center(
+          child: Text('3D Fluid Meniscus UI', 
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white70, letterSpacing: 1.5)),
+        ),
+      ),
+      extendBody: true,
+      bottomNavigationBar: _build3DFluidNavBar(),
+    );
+  }
+
+  Widget _build3DFluidNavBar() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // حساب المسافة لكل أيقونة
+    final double itemWidth = screenWidth / icons.length; 
+    
+    return SizedBox(
+      height: 100,
+      child: Stack(
+        children: [
+          // 1. الشريط الزجاجي مع الانحناء المائي (Fluid Socket)
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: selectedIndex.toDouble()),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.elasticOut, // حركة فيزيائية مرنة
+            builder: (context, value, child) {
+              final currentPosition = (value + 0.5) * itemWidth;
+              
+              return Stack(
+                children: [
+                  // تأثير الزجاج الضبابي (Glassmorphism)
+                  ClipPath(
+                    clipper: FluidClipper(currentPosition),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        color: Colors.black.withOpacity(0.4), // لون زجاجي داكن
+                      ),
+                    ),
+                  ),
+                  // حدود لامعة للشريط (Glossy Border)
+                  CustomPaint(
+                    size: Size(screenWidth, 100),
+                    painter: FluidPainter(currentPosition),
+                  ),
+                  // 2. الكرة ثلاثية الأبعاد (3D Orb)
+                  Positioned(
+                    left: currentPosition - 30, // 30 هو نصف عرض الكرة
+                    top: 15, // غوص الكرة داخل التجويف
+                    child: const Sphere3D(),
+                  ),
+                ],
+              );
+            },
+          ),
+          
+          // 3. الأيقونات التفاعلية
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(icons.length, (index) {
+              final isSelected = index == selectedIndex;
+              return GestureDetector(
+                onTap: () => setState(() => selectedIndex = index),
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  width: itemWidth,
+                  height: 100,
+                  child: Center(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: EdgeInsets.only(top: isSelected ? 30 : 0),
+                      child: Icon(
+                        icons[index],
+                        size: isSelected ? 28 : 24,
+                        color: isSelected ? Colors.cyanAccent : Colors.white54,
+                        shadows: isSelected 
+                          ? [const BoxShadow(color: Colors.cyanAccent, blurRadius: 10)] 
+                          : [],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
         ],
       ),
@@ -81,55 +137,106 @@ class _FluidNavBarState extends State<FluidNavBar> {
   }
 }
 
-// كود الرياضيات الخاص بالمنحنى المائي (Fluid Curve)
+// === مكون الكرة 3D (الجرافيك العالي) ===
+class Sphere3D extends StatelessWidget {
+  const Sphere3D({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        // التدرج الدائري لصنع إضاءة كروية 3D (نقطة ضوء من الأعلى)
+        gradient: RadialGradient(
+          center: const Alignment(-0.3, -0.5),
+          radius: 0.8,
+          colors: [
+            Colors.white, // نقطة اللمعان
+            Colors.cyan.shade400, // اللون الأساسي
+            const Color(0xFF003344), // الظل السفلي للكرة
+          ],
+          stops: const [0.0, 0.4, 1.0],
+        ),
+        boxShadow: [
+          // التوهج الخارجي للكرة (Glow)
+          BoxShadow(
+            color: Colors.cyanAccent.withOpacity(0.5),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 5),
+          ),
+          // الظل السفلي العميق
+          BoxShadow(
+            color: Colors.black.withOpacity(0.6),
+            blurRadius: 10,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// === حسابات مسار الانحناء (الرياضيات) ===
+class FluidClipper extends CustomClipper<Path> {
+  final double position;
+  FluidClipper(this.position);
+
+  @override
+  Path getClip(Size size) {
+    return _generateFluidPath(size, position);
+  }
+  @override
+  bool shouldReclip(covariant FluidClipper oldClipper) => true;
+}
+
 class FluidPainter extends CustomPainter {
-  final double position; // موقع الانحناء
+  final double position;
   FluidPainter(this.position);
 
   @override
   void paint(Canvas canvas, Size size) {
+    final path = _generateFluidPath(size, position);
+    // رسم خط علوي مضيء خفيف يعطي إحساس السطح الزجاجي (Highlight)
     final paint = Paint()
-      ..color = const Color(0xFF2A2A2A)
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    
-    // أبعاد المنحنى
-    const double curveWidth = 140;
-    const double curveDepth = 55;
-    
-    final double centerX = size.width * position;
-    final double startX = centerX - (curveWidth / 2);
-    final double endX = centerX + (curveWidth / 2);
-
-    path.moveTo(0, 0); 
-    path.lineTo(startX - 20, 0); // الخط المستقيم قبل المنحنى
-    
-    // رسم المنحنى النازل (الجزء الأيسر من التجويف)
-    path.cubicTo(
-      startX, 0, 
-      centerX - 30, curveDepth, 
-      centerX, curveDepth, 
-    );
-    
-    // رسم المنحنى الطالع (الجزء الأيمن من التجويف)
-    path.cubicTo(
-      centerX + 30, curveDepth,
-      endX, 0,
-      endX + 20, 0,
-    );
-
-    path.lineTo(size.width, 0); // الخط المستقيم بعد المنحنى
-    path.lineTo(size.width, size.height); // النزول لآخر الشاشة
-    path.lineTo(0, size.height); // الرجوع لأول الشاشة
-    path.close(); // إغلاق الشكل
-
+      ..color = Colors.white.withOpacity(0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
     canvas.drawPath(path, paint);
   }
-
   @override
-  bool shouldRepaint(covariant FluidPainter oldDelegate) {
-    // إعادة الرسم فقط إذا تغير مكان الزرار
-    return oldDelegate.position != position;
-  }
+  bool shouldRepaint(covariant FluidPainter oldDelegate) => true;
+}
+
+Path _generateFluidPath(Size size, double position) {
+  final path = Path();
+  const double curveWidth = 130;
+  const double curveDepth = 45;
+
+  final double startX = position - (curveWidth / 2);
+  final double endX = position + (curveWidth / 2);
+
+  path.moveTo(0, 0);
+  path.lineTo(startX - 20, 0);
+
+  // الانحناء السلس (Meniscus)
+  path.cubicTo(
+    startX, 0,
+    position - 35, curveDepth,
+    position, curveDepth,
+  );
+  path.cubicTo(
+    position + 35, curveDepth,
+    endX, 0,
+    endX + 20, 0,
+  );
+
+  path.lineTo(size.width, 0);
+  path.lineTo(size.width, size.height);
+  path.lineTo(0, size.height);
+  path.close();
+  
+  return path;
 }
